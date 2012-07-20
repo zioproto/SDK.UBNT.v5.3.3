@@ -6,8 +6,8 @@
 /build_dir
 /staging_dir
 /tmp
-/feeds
+#/feeds
 #/feeds.conf
 /files
-/package/feeds
-/package/openwrt-packages
+#/package/feeds
+#/package/openwrt-packages

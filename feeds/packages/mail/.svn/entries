@@ -1,0 +1,52 @@
+10
+
+dir
+28306
+file:///raid/repositories/openwrt/branches/packages_8.09/mail
+file:///raid/repositories/openwrt
+
+
+
+2008-09-27T11:25:41.935561Z
+12726
+nbd
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+e0eaf0b8-c020-4168-9010-202975f5e11d
+
+dovecot
+dir
+
+procmail
+dir
+
+ssmtp
+dir
+
+mini_sendmail
+dir
+
+mutt
+dir
+
+xmail
+dir
+
+fetchmail
+dir
+
+imapfilter
+dir
+

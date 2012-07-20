@@ -1,0 +1,135 @@
+10
+
+dir
+28306
+file:///raid/repositories/openwrt/branches/packages_8.09/Xorg/xorg/font
+file:///raid/repositories/openwrt
+
+
+
+2008-12-09T23:24:25.116320Z
+13571
+mirko
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+e0eaf0b8-c020-4168-9010-202975f5e11d
+
+template.mk
+file
+
+
+
+
+2011-09-26T06:58:42.165677Z
+c60660038f823f96a505c28d9b2369c9
+2008-12-09T23:24:25.116320Z
+13571
+mirko
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+2192
+
+font-jis-misc
+dir
+
+font-bh-75dpi
+dir
+
+font-misc-misc
+dir
+
+font-dec-misc
+dir
+
+font-xfree86-type1
+dir
+
+font-isas-misc
+dir
+
+font-alias
+dir
+
+font-micro-misc
+dir
+
+font-misc-cyrillic
+dir
+
+encodings
+dir
+
+font-cursor-misc
+dir
+
+font-ibm-type1
+dir
+
+font-daewoo-misc
+dir
+
+packages
+file
+
+
+
+
+2011-09-26T06:58:42.165677Z
+68936c360fa2b28f59d1d5e7f0700db4
+2008-12-09T23:24:25.116320Z
+13571
+mirko
+has-props
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+265
+

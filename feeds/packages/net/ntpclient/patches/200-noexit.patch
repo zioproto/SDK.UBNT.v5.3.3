@@ -1,0 +1,167 @@
+Index: ntpclient-2007/ntpclient.c
+===================================================================
+--- ntpclient-2007.orig/ntpclient.c	2010-11-08 15:07:33.000000000 +0200
++++ ntpclient-2007/ntpclient.c	2010-11-08 15:18:20.000000000 +0200
+@@ -132,6 +132,7 @@
+ 	int goodness;
+ 	int cross_check;
+ 	char serv_addr[4];
++	int noexit;
+ };
+ 
+ /* prototypes for some local routines */
+@@ -439,20 +440,24 @@
+ 	return 1;
+ }
+ 
+-static void stuff_net_addr(struct in_addr *p, char *hostname)
++extern void resolv_init(void);
++
++static int stuff_net_addr(struct in_addr *p, char *hostname)
+ {
+ 	struct hostent *ntpserver;
++	resolv_init();
+ 	ntpserver=gethostbyname(hostname);
+ 	if (ntpserver == NULL) {
+ 		herror(hostname);
+-		exit(1);
++		return 1;
+ 	}
+ 	if (ntpserver->h_length != 4) {
+ 		/* IPv4 only, until I get a chance to test IPv6 */
+ 		fprintf(stderr,"oops %d\n",ntpserver->h_length);
+-		exit(1);
++		return 1;
+ 	}
+ 	memcpy(&(p->s_addr),ntpserver->h_addr_list[0],4);
++	return 0;
+ }
+ 
+ static void setup_receive(int usd, unsigned int interface, short port)
+@@ -470,16 +475,19 @@
+ 	/* listen(usd,3); this isn't TCP; thanks Alexander! */
+ }
+ 
+-static void setup_transmit(int usd, char *host, short port, struct ntp_control *ntpc)
++static int setup_transmit(int usd, char *host, short port, struct ntp_control *ntpc)
+ {
+ 	struct sockaddr_in sa_dest;
+ 	memset(&sa_dest,0,sizeof sa_dest);
+ 	sa_dest.sin_family=AF_INET;
+-	stuff_net_addr(&(sa_dest.sin_addr),host);
++	if (stuff_net_addr(&(sa_dest.sin_addr),host) != 0)
++		return 1;
+ 	memcpy(ntpc->serv_addr,&(sa_dest.sin_addr),4); /* XXX asumes IPv4 */
+ 	sa_dest.sin_port=htons(port);
+ 	if (connect(usd,(struct sockaddr *)&sa_dest,sizeof sa_dest)==-1)
+-		{perror("connect");exit(1);}
++		{perror("connect"); exit(1);}
++
++	return 0;
+ }
+ 
+ static void primary_loop(int usd, struct ntp_control *ntpc)
+@@ -593,13 +601,15 @@
+ #ifdef ENABLE_REPLAY
+ 	" [-r]"
+ #endif
+-	" [-s] [-t]\n",
++	" [-s] [-t] [-n]\n",
+ 	argv0);
+ }
+ 
+ int main(int argc, char *argv[]) {
+ 	int usd;  /* socket */
+ 	int c;
++	int ret;
++	int retry_count;
+ 	/* These parameters are settable from the command line
+ 	   the initializations here provide default behavior */
+ 	short int udp_local_port=0;   /* default of 0 means kernel chooses */
+@@ -612,9 +622,10 @@
+ 	ntpc.cycle_time=600;          /* seconds */
+ 	ntpc.goodness=0;
+ 	ntpc.cross_check=1;
++	ntpc.noexit=0;
+ 
+ 	for (;;) {
+-		c = getopt( argc, argv, "c:" DEBUG_OPTION "f:g:h:i:lp:q:" REPLAY_OPTION "stD");
++		c = getopt( argc, argv, "c:" DEBUG_OPTION "f:g:h:i:lp:q:" REPLAY_OPTION "stDn");
+ 		if (c == EOF) break;
+ 		switch (c) {
+ 			case 'c':
+@@ -667,6 +678,10 @@
+ 				daemon();
+ 				break;
+ 
++			case 'n':
++				ntpc.noexit=1;
++				break;
++
+ 			default:
+ 				usage(argv[0]);
+ 				exit(1);
+@@ -697,10 +712,11 @@
+ 		"  -p local_port  %d\n"
+ 		"  -q min_delay   %f\n"
+ 		"  -s set_clock   %d\n"
+-		"  -x cross_check %d\n",
++		"  -x cross_check %d\n"
++		"  -n noexit      %d\n",
+ 		ntpc.probe_count, debug, ntpc.goodness,
+ 		hostname, ntpc.cycle_time, ntpc.live, udp_local_port, min_delay,
+-		ntpc.set_clock, ntpc.cross_check );
++		ntpc.set_clock, ntpc.cross_check, ntpc.noexit);
+ 	}
+ 
+ 	/* Startup sequence */
+@@ -709,7 +725,19 @@
+ 
+ 	setup_receive(usd, INADDR_ANY, udp_local_port);
+ 
+-	setup_transmit(usd, hostname, NTP_PORT, &ntpc);
++	for (retry_count=1;;retry_count++) {
++		ret=setup_transmit(usd, hostname, NTP_PORT, &ntpc);
++		if (ret==0 || ntpc.noexit==0 || (ntpc.probe_count>0 && retry_count>=ntpc.probe_count))
++			break;
++
++		sleep(MIN_INTERVAL);
++	}
++
++	if (ret!=0)
++		exit(ret);
++
++	if (ntpc.probe_count>0)
++		ntpc.probe_count-=retry_count;
+ 
+ 	primary_loop(usd, &ntpc);
+ 
+Index: ntpclient-2007/Makefile
+===================================================================
+--- ntpclient-2007.orig/Makefile	2010-11-08 15:16:40.000000000 +0200
++++ ntpclient-2007/Makefile	2010-11-08 15:16:58.000000000 +0200
+@@ -21,7 +21,7 @@
+ test: ntpclient
+ 	./ntpclient -d -r <test.dat
+ 
+-ntpclient: ntpclient.o phaselock.o
++ntpclient: ntpclient.o phaselock.o resolv.o
+ 
+ ntpclient.o phaselock.o: ntpclient.h
+ 
+Index: ntpclient-2007/resolv.c
+===================================================================
+--- /dev/null	1970-01-01 00:00:00.000000000 +0000
++++ ntpclient-2007/resolv.c	2010-11-08 15:18:22.000000000 +0200
+@@ -0,0 +1,11 @@
++#define _BSD_SOURCE
++
++#include <sys/types.h>
++#include <netinet/in.h>
++#include <netdb.h>
++#include <arpa/nameser.h>
++#include <resolv.h>
++
++void resolv_init(void) {
++	res_init();
++}

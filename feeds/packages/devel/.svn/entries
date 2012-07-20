@@ -1,0 +1,46 @@
+10
+
+dir
+28306
+file:///raid/repositories/openwrt/branches/packages_8.09/devel
+file:///raid/repositories/openwrt
+
+
+
+2009-01-13T21:53:14.639339Z
+14028
+lars
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+e0eaf0b8-c020-4168-9010-202975f5e11d
+
+patch
+dir
+
+build-essential
+dir
+
+binutils
+dir
+
+diffutils
+dir
+
+gcc
+dir
+
+make
+dir
+

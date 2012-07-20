@@ -1,0 +1,466 @@
+10
+
+dir
+28306
+file:///raid/repositories/openwrt/branches/packages_8.09/libs
+file:///raid/repositories/openwrt
+
+
+
+2009-10-04T13:39:10.579554Z
+17852
+nico
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+e0eaf0b8-c020-4168-9010-202975f5e11d
+
+librsync
+dir
+
+jpeg
+dir
+
+libao
+dir
+
+avahi
+dir
+
+radiusclient-ng
+dir
+
+fftw3
+dir
+
+libdaemon
+dir
+
+neon
+dir
+
+ezxml
+dir
+
+libgcrypt
+dir
+
+libspe2
+dir
+
+postgresql
+dir
+
+libnetfilter-conntrack
+dir
+
+cyrus-sasl
+dir
+
+id3lib
+dir
+
+dbus-glib
+dir
+
+bluez-libs
+dir
+
+libxml2
+dir
+
+tcp_wrappers
+dir
+
+liboil
+dir
+
+check
+dir
+
+libnet-1.1.x
+dir
+
+libdnet
+dir
+
+opencdk
+dir
+
+gettext
+dir
+
+tiff
+dir
+
+axtls
+dir
+
+libcroco
+dir
+
+openldap
+dir
+
+taglib
+dir
+
+wnck
+dir
+
+libupnp
+dir
+
+clearsilver
+dir
+
+libpthread-stubs
+dir
+
+alsa-lib
+dir
+
+libptmalloc3
+dir
+
+db
+dir
+
+libatomicops
+dir
+
+uclibc++
+dir
+
+cgilib
+dir
+
+wxbase
+dir
+
+libconfig
+dir
+
+glib2
+dir
+
+nmeap
+dir
+
+libpam
+dir
+
+curl
+dir
+
+howl
+dir
+
+libsndfile
+dir
+
+gnutls
+dir
+
+libgssapi
+dir
+
+glib
+dir
+
+keynote
+dir
+
+libnfnetlink
+dir
+
+libvorbisidec
+dir
+
+libjson-c
+dir
+
+argtable
+dir
+
+gsl
+dir
+
+libdbi
+dir
+
+gsm
+dir
+
+rrdtool-1.0.x
+dir
+
+libaudiofile
+dir
+
+opal
+dir
+
+libffi
+dir
+
+cyassl
+dir
+
+libcli
+dir
+
+net-snmp
+dir
+
+confuse
+dir
+
+libnetfilter-queue
+dir
+
+libmpd
+dir
+
+fcgi
+dir
+
+libtheora
+dir
+
+gdbm
+dir
+
+libtasn1
+dir
+
+argp-standalone
+dir
+
+popt
+dir
+
+apr
+dir
+
+libexif
+dir
+
+libosip2
+dir
+
+freetype
+dir
+
+libsamplerate
+dir
+
+libnids
+dir
+
+speex
+dir
+
+libmad
+dir
+
+libamsel
+dir
+
+libaio
+dir
+
+serdisplib
+dir
+
+clinkc
+dir
+
+lzo
+dir
+
+libsynce
+dir
+
+libevent
+dir
+
+file
+dir
+
+libffi-sable
+dir
+
+gmp
+dir
+
+sqlite2
+dir
+
+libtorrent
+dir
+
+sqlite3
+dir
+
+matrixssl
+dir
+
+libnfsidmap
+dir
+
+pcre
+dir
+
+gd
+dir
+
+giflib
+dir
+
+st2205tool
+dir
+
+libsigc++
+dir
+
+libid3tag
+dir
+
+libdlna
+dir
+
+ptlib
+dir
+
+libart
+dir
+
+expat
+dir
+
+libIDL2
+dir
+
+xyssl
+dir
+
+libyaml
+dir
+
+libshout
+dir
+
+iksemel
+dir
+
+libvorbis
+dir
+
+libgpg-error
+dir
+
+apr-util
+dir
+
+libol
+dir
+
+libdvbpsi4
+dir
+
+libogg
+dir
+
+libmcrypt
+dir
+
+faad2
+dir
+
+pwlib
+dir
+
+libnet-1.0.x
+dir
+
+libusb
+dir
+
+libxslt
+dir
+
+libmpcdec
+dir
+
+librpcsecgss
+dir
+
+ustl
+dir
+
+libelf
+dir
+
+ossp-js
+dir
+
+zaptel
+dir
+
+pthsem
+dir
+
+libinklevel
+dir
+
+openh323
+dir
+
+libidn
+dir
+
+libnetfilter-log
+dir
+
+mysql
+dir
+
+libiconv
+dir
+
+flac
+dir
+
+zaptel-1.4.x
+dir
+
+libxapian
+dir
+
+libtwin
+dir
+
+libpfm
+dir
+
+libnotimpl
+dir
+
+libgphoto2
+dir
+
+libpng
+dir
+
