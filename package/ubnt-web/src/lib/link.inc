@@ -976,10 +976,16 @@ Function cfg_get_ipv4mask $cfg, $iface, $mask (
 );
 
 Function cfg_get_ipv4gw $cfg, $iface, $gw (
-	if (!strlen($gw)) {
-		$gw = "0.0.0.0";
-	}
-	return cfg_get_def($cfg, "route.1.gateway", $gw);
+        $status = "disabled";
+        $status = cfg_get_def($cfg, "route.1.status", $status);
+        if($status == "enabled")
+        {
+                if (!strlen($gw)) {
+                        $gw = "0.0.0.0";
+                }
+                return cfg_get_def($cfg, "route.1.gateway", $gw);
+        }
+        return "";
 );
 
 Function cfg_get_dns $cfg, $dns, $no (

@@ -152,7 +152,7 @@ jQuery(document).ready(initRouter);
 	<td colspan="3"><input type="text" class="i_static" style="width: 145px;" name="lanmask" id="lanmask" value="<?echo $lanmask>" req="1" callback="validateWanNetmask" realname="<? echo dict_translate("LAN Netmask"); >"/></td>
 	</tr>
 	<tr class="static"><td class="f"><? echo dict_translate("Gateway IP:"); ></td>
-	<td colspan="3"><input type="text" class="i_static" style="width: 145px;" name="wangw" id="wangw" value="<?echo $wangw>" req="1" callback="validateWanIP" realname="<? echo dict_translate("LAN Gateway IP"); >"/></td>
+	<td colspan="3"><input type="text" class="i_static" style="width: 145px;" name="wangw" id="wangw" value="<?echo $wangw>" req="1" callback="validateWlanOptIP" realname="<? echo dict_translate("LAN Gateway IP"); >"/></td>
 	</tr>
 	<tr class="static"><td class="f"><? echo dict_translate("Primary DNS IP:"); ></td>
 	<td colspan="3"><input type="text" class="i_static" style="width: 145px;" name="dns1" id="dns1" value="<?echo $dns1>" req="1" callback="validateWanIP" realname="<? echo dict_translate("Primary DNS IP"); >"/></td>
