@@ -1,4 +1,13 @@
 
+First of all you need to check the path of your feeds in feeds.conf.default and then:
+
+./scripts/feeds update
+./scripts/feeds install -p zopenwrtpackages radvd
+./scripts/feeds install olsrd-ninux
+./scripts/feeds install -p packages mtr
+./scripts/feeds install -p packages wget
+./scripts/feeds install -p packages iputils
+
 How to compile this SDK
 -----------------------
 
