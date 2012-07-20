@@ -1,6 +1,6 @@
 --- a/configure.ac
 +++ b/configure.ac
-@@ -637,14 +637,15 @@ AC_CONFIG_FILES([Makefile src/Makefile
+@@ -638,14 +638,15 @@ AC_CONFIG_FILES([Makefile src/Makefile
  		 tests/docroot/www/expire/Makefile \
  		 distribute.sh])
  AC_OUTPUT
@@ -18,7 +18,7 @@
  else
 --- a/src/Makefile.am
 +++ b/src/Makefile.am
-@@ -303,7 +303,11 @@ proc_open_CPPFLAGS= -DDEBUG_PROC_OPEN
+@@ -304,7 +304,11 @@ proc_open_CPPFLAGS= -DDEBUG_PROC_OPEN
  #evalo_SOURCES = buffer.c eval.c
  #bench_SOURCES = buffer.c bench.c
  #ajp_SOURCES = ajp.c
@@ -32,7 +32,7 @@
 +mod_airos_la_LIBADD = $(TDB_LIB)  $(common_libadd)
 --- /dev/null
 +++ b/src/mod_airos.c
-@@ -0,0 +1,1006 @@
+@@ -0,0 +1,1031 @@
 +#include <ctype.h>
 +#include <stdlib.h>
 +#include <stdio.h>
@@ -572,6 +572,28 @@
 +}
 +
 +static int
++phy_is_in_list(const physical* uri, const array* list) {
++	size_t k, ct_len;
++	data_string* ds;
++	size_t uri_len = uri->path->used - 1;
++
++	for (k = 0; k < list->used; k++) {
++		ds = (data_string *)list->data[k];
++		ct_len = ds->value->used - 1;
++
++		if (ct_len < 1) continue;
++		if (ct_len > uri_len) continue;
++
++		if (strncasecmp(uri->path->ptr + uri_len - ct_len,
++				ds->value->ptr, ct_len) == 0) {
++			return 1;
++		}
++	}
++
++	return 0;
++}
++
++static int
 +is_ajax_request(const request* req) {
 +	data_string* header;
 +	if (req == NULL)
@@ -946,8 +968,10 @@
 +	data_string* ds;
 +	session_t* session = NULL;
 +	int is_uri_cachable = 0;
++	int is_phy_allowed = 0;
 +
-+	is_uri_cachable = uri_is_in_list(&con->uri, p->conf.cachable);
++	is_uri_cachable = phy_is_in_list(&con->physical, p->conf.cachable);
++	is_phy_allowed = phy_is_in_list(&con->physical, p->conf.allowed);
 +
 +	if (is_uri_cachable) {
 +		time_t expires = srv->cur_ts + DEFAULT_CACHE_AGE;
@@ -981,7 +1005,8 @@
 +	}
 +
 +	/* check session authorization */
-+	if (session_is_authenticated(session) && !session_is_authorized(session, srv, con)) {
++	if ((!is_phy_allowed && (!session_is_authenticated(session) || !session_is_authorized(session, srv, con)))
++		|| (session_is_authenticated(session) && !session_is_authorized(session, srv, con))) {
 +		 free(session);
 +		 session = NULL;
 +		 con->http_status = 403;
