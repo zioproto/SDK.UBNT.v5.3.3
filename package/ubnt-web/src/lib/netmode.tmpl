@@ -1,0 +1,14 @@
+<select id="netmode" name="netmode" style="width:145px" onchange="changeNetworkMode(this,'<? echo $netmode;>')">
+<? if ($board_netmodes & $netmode_bridge) { >
+	<option value="bridge" <? if ($netmode == "bridge") { >selected<? } >><? echo dict_translate("Bridge"); ></option>
+<? } >
+<? if ($board_netmodes & $netmode_router) { >
+	<option value="router" <? if ($netmode == "router") { >selected<? } >><? echo dict_translate("Router"); ></option>
+<? } >
+<? if ($board_netmodes & $netmode_soho) { >
+	<option value="soho" <? if ($netmode == "soho") { >selected<? } >><? echo dict_translate("SOHO Router"); ></option>
+<? } >
+<? if ($board_netmodes & $netmode_3g) { >
+	<option value="3g" <? if ($netmode == "3g") { >selected<? } >><? echo dict_translate("3G Router"); ></option>
+<? } >
+</select>

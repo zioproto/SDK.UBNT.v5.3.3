@@ -1,0 +1,160 @@
+<script type="text/javascript" language="javascript">
+//<!--
+function initBridge() {
+	var val="<?echo $wlanipmode;>";
+	selectRadio("wlanipmode", val);
+	chooseIPMode(parseInt(val));
+	toggleFirewall();
+        toggleVLAN();
+}
+
+function doSubmit() {
+	$('#bridge_form').submit();
+}
+
+jQuery(document).ready(initBridge);
+//-->
+</script>
+  <tr>
+    <td colspan="2" class="centr">
+    <?if (cfg_is_modified($cfg_file)) { include("lib/modified.tmpl"); } include("lib/error.tmpl");>
+    <br>
+    <form enctype="multipart/form-data" id="bridge_form" name="bridge_form" action="network.cgi" method="POST" onSubmit="return validateStandard(this, 'error');">
+    <table class="linktable" cellspacing="0">
+	<tr><th colspan="4"><? echo dict_translate("Network Role"); ></th></tr>
+	<tr><td colspan="4" class="tdpad">&nbsp;</td></tr>
+	<tr><td class="f d"><? echo dict_translate("Network Mode:"); ></td>
+	<td colspan="3">
+	<? include("lib/netmode.tmpl"); >
+	</td>
+        </tr>
+	<tr><td class="f"><? echo dict_translate("Disable Network:"); ></td>
+	<td colspan="3">
+	<select id="ifcdisable" name="ifcdisable">
+	<option value="0" selected><? echo dict_translate("None"); ></option>
+	<option value="1" <? if ($ifcdisable == 1) { > selected <? } >><? echo dict_translate("LAN"); ></option>
+	<option value="2" <? if ($ifcdisable == 2) { > selected <? } >><? echo dict_translate("WLAN"); ></option>
+	</select>
+	</td>
+	</tr>
+
+    <tr><td colspan="4" class="tdpad">&nbsp;</td></tr>
+    <tr><th colspan="4"><? echo dict_translate("Network Settings"); ></th></tr>
+    <tr><td colspan="4" class="tdpad">&nbsp;</td></tr>
+
+      <!-- Bridge address assignment -->
+      <tr>
+        <td class="f"><? echo dict_translate("Bridge IP Address:"); ></td>
+        <td class= "f-left" colspan="3">
+	  <input type="radio" id="dhcp" name="wlanipmode" value="1" <?if($wlanipmode==1){echo "selected";}> onClick="chooseIPMode(1);"><label for="dhcp"><? echo dict_translate("DHCP"); ></label>
+	  &nbsp;<input type="radio" id="static" name="wlanipmode" value="0" <?if($wlanipmode==0){echo "selected";}> onClick="chooseIPMode(0);"><label for="static"><? echo dict_translate("Static"); ></label></td>
+      </tr>
+      <tr class="static"><td class="f"><? echo dict_translate("IP Address:"); ></td>
+		<td colspan="3"><input type="text" class="i_static" style="width: 145px;" name="brip" id="brip" value="<?echo $brip>" req="1" callback="validateBridgeIP" realname="<? echo dict_translate("IP address"); >"/></td>
+      </tr>
+      <tr class="static"><td class="f"><? echo dict_translate("Netmask:"); ></td>
+	<td colspan="3"><input type="text" class="i_static" style="width: 145px;" name="brmask" id="brnetmask" value="<?echo $brmask>" req="1" callback="validateBridgeNetmask" realname="<? echo dict_translate("Netmask"); >"/></td>
+      </tr>
+       <tr class="static"><td class="f"><? echo dict_translate("Gateway IP:"); ></td>
+	<td colspan="3"><input type="text" class="i_static" style="width: 145px;" name="brgw" id="brgw" value="<?echo $brgw>" req="1" callback="validateBridgeIP" realname="<? echo dict_translate("Gateway IP"); >"/></td>
+      </tr>
+       <tr class="static"><td class="f"><? echo dict_translate("Primary DNS IP:"); ></td>
+        <td colspan="3"><input type="text" class="i_static" style="width: 145px;" name="dns1" id="dns1"
+        value="<?echo $dns1>" req="1" callback="validateBridgeOptIP"
+        realname="<? echo dict_translate("Primary DNS IP"); >"/></td>
+      </tr>
+       <tr class="static"><td class="f"><? echo dict_translate("Secondary DNS IP:"); ></td>
+        <td colspan="3"><input type="text" class="i_static" style="width: 145px;" name="dns2" id="dns2"
+        value="<?echo $dns2>" req="1" callback="validateBridgeOptIP"
+        realname="<? echo dict_translate("Secondary DNS IP"); >"/></td>
+      </tr>
+       <tr class="dhcp"><td class="f"><? echo dict_translate("DHCP Fallback IP:"); ></td>
+        <td colspan="3"><input type="text" class="i_dhcp" style="width: 145px;" name="fallback_ip" id="fallback_ip"
+        value="<?echo $fallback_ip>" req="1" callback="validateFallbackIP"
+        realname="<? echo dict_translate("DHCP Fallback IP"); >"/></td>
+      </tr>
+       <tr class="dhcp"><td class="f"><? echo dict_translate("DHCP Fallback Netmask:"); ></td>
+        <td colspan="3"><input type="text" class="i_dhcp" style="width: 145px;" name="fallback_netmask" id="fallback_netmask"
+        value="<?echo $fallback_netmask>" req="1" callback="validateFallbackNetMask"
+        realname="<? echo dict_translate("DHCP Fallback NetMask"); >"/></td>
+      </tr>      
+      <tr><td class="f"><? echo dict_translate("MTU:"); ></td>
+	<td colspan="3">
+	<input type="text" class="config std_width" maxlength="5" size="5"
+							id="lan_mtu" name="lan_mtu"
+							value="<? echo $lan_mtu;>" req="1" maxvalue="1518" minvalue="64"
+							realname="<? echo dict_translate("MTU") + " [64-1518]";>">
+        
+        </td>
+      </tr>
+      <tr><td class="f"><? echo dict_translate("Spanning Tree Protocol:"); ></td>
+	<td colspan="3"><input type="checkbox" name="stp" id="stp" value="enabled" <? if ($stp=="enabled") { echo "checked"; }> /></td>
+      </tr>
+	<tr><td class="f"><? echo dict_translate("Auto IP Aliasing:"); ></td>
+	<td colspan="3"><input type="checkbox" name="autoip_br_status" id="autoip_br_status" value="enabled" <? if ($autoip_br_status=="enabled") { echo "checked"; }> />
+	</td>
+	</tr>
+	<tr><td class="f d"><? echo dict_translate("IP Aliases:"); ></td>
+	<td colspan="3">
+<input type="button" id="ipalias_configure" name="ipalias_configure"
+	  	value="<? echo dict_translate("Configure..."); >"
+	  	onClick="return openPage('ipalias.cgi?iface=<? echo $br_iface;>',720,330);" />
+	</td>
+	</tr>
+
+      <tr><td colspan="4" class="tdpad">&nbsp;</td></tr>
+      <tr><th colspan="4"><? echo dict_translate("VLAN Network Settings"); ></th></tr>
+      <tr><td colspan="4" class="tdpad">&nbsp;</td></tr>
+      
+      <tr><td class="f"><? echo dict_translate("Enable VLAN:"); ></td>
+	<td colspan="3"><input type="checkbox" name="vlan_status" id="vlan_status" value="enabled" <? if ($vlan_status=="enabled") { echo "checked"; }> onClick="toggleVLAN();"/></td>
+      </tr>
+      <tr class="vlaninfo"><td class="f"><? echo dict_translate("VLAN ID:"); ></td>
+	<td colspan="3"><input type="text" name="vlan_tag" id="vlan_tag" style="width:40px" value="<? echo $vlan_tag>" maxlength="4" size="5" req="1" 
+        	maxvalue="4094" minvalue="2" realname="<? echo dict_translate("VLAN ID"); > [2 - 4094]"/></td>
+      </tr>
+      <tr class="vlaninfo"><td class="f"><? echo dict_translate("VLAN Network:"); ></td>
+        <td colspan="3">
+		<select name="vlan_ifc" id="vlan_ifc" style="width:145px">
+		<option value="wlan" <? if ($vlan_ifc == "wlan") { > selected <? } >><? echo dict_translate("WLAN");></option>
+		<option value="lan" <? if ($vlan_ifc == "lan") { > selected <? } >><? echo dict_translate("LAN");></option>
+		</select>
+        </td>
+      </tr>
+      
+      <tr><td colspan="4" class="tdpad">&nbsp;</td></tr>
+      <tr><th colspan="4"><? echo dict_translate("Firewall Settings"); ></th></tr>
+	  <tr><td colspan="4" class="tdpad">&nbsp;</td></tr>
+      <tr><td class="f"><? echo dict_translate("Enable Firewall:"); ></td>
+	  <td colspan="3"><input type="checkbox" name="firewall_status"
+	  	id="firewall_status" onClick="toggleFirewall();" value="enabled"
+	  	<? if ($firewall_status=="enabled") { echo "checked"; }>>
+	  	<input type="button" id="firewall_configure" name="firewall_configure"
+	  	value="<? echo dict_translate("Configure..."); >"
+	  	onClick="return openPage('firewall.cgi?netmode=bridge',1000,550);" /></td>
+      </tr>
+	  <tr><td colspan="4" class="tdpad">&nbsp;</td></tr>
+      <tr><th colspan="4"><? echo dict_translate("Static Routes"); ></th></tr>
+	  <tr><td colspan="4" class="tdpad">&nbsp;</td></tr>
+      <tr><td class="f"><? echo dict_translate("Static Routes:"); ></td>
+	  <td colspan="3"><input type="button" id="routes_configure" name="routes_configure"
+	  	value="<? echo dict_translate("Configure..."); >"
+	  	onClick="return openPage('routes.cgi',900,550);" /></td>
+      </tr>
+	  <tr><td colspan="4" class="tdpad">&nbsp;</td></tr>
+      <tr><th colspan="4">&nbsp;</th></tr>
+      <tr>
+		<td colspan="4" class="change"><input type="submit" value="<? echo dict_translate("Change"); >" /></td>
+      </tr>
+   </table>
+    </form>
+    </td>
+  </tr>
+  <tr>
+    <td height="10" colspan="2" class="foot"><? echo dict_translate($oem_copyright); >
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>

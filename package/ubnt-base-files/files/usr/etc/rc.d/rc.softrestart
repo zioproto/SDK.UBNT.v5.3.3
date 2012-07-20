@@ -1,0 +1,82 @@
+#!/bin/sh
+
+. /usr/etc/rc.d/rc.funcs
+
+CFG_SYSTEM="/tmp/system.cfg"
+CFG_SYSTEM_SORTED="/tmp/.system.cfg.$$"
+CFG_RUNNING="/tmp/running.cfg"
+CFG_RUNNING_SORTED="/tmp/.running.cfg.$$"
+CFG_DEFAULT="/etc/default.cfg"
+
+if [ $# -gt 0 ]; then
+	if [ ".$1" = ".save" ]; then
+		sort $CFG_RUNNING > $CFG_RUNNING_SORTED
+		sort $CFG_SYSTEM > $CFG_SYSTEM_SORTED
+		diff $CFG_RUNNING_SORTED $CFG_SYSTEM_SORTED
+		if [ $? -eq 0 ]; then
+	                # Old cfg = new cfg. Nothing to save, no need to restart
+			rm -f $CFG_RUNNING_SORTED $CFG_SYSTEM_SORTED
+	                exit 0
+		fi
+		# we can safely delete sorted running cfg, but keep system one!
+		rm $CFG_RUNNING_SORTED
+	fi
+fi
+
+INITTAB_DEF=/usr/etc/inittab
+INITTAB_CUR=/etc/inittab
+cp -f ${INITTAB_DEF} ${INITTAB_CUR}
+kill -1 1
+
+# extra: if any hang happens, watchdog will reboot
+watchdog_stop
+
+rc_stop
+
+ifconfig wifi0 down
+eth_down
+
+/usr/etc/rc.d/rc.modules unload 90-rssi-leds
+/usr/etc/rc.d/rc.modules unload 55-ath-11n
+/usr/etc/rc.d/rc.modules unload 50-ubnt-poll
+/usr/etc/rc.d/rc.modules unload 55-ath-11n
+/usr/etc/rc.d/rc.modules unload 50-ubnt-poll
+
+/usr/etc/rc.d/rc.modules unload 10-ag7240
+
+# extra: restore watchdog functionality
+watchdog_start
+
+
+/usr/etc/rc.d/rc.modules load 10-ag7240
+
+/usr/etc/rc.d/rc.modules load 50-ubnt-poll
+/usr/etc/rc.d/rc.modules load 55-ath-11n
+/usr/etc/rc.d/rc.modules load 90-rssi-leds
+
+rm -fr /etc/sysinit/*
+
+# run configuration parser
+if [ -e /sbin/ubntconf ]; then
+	/sbin/ubntconf
+fi
+
+TEST_LOCK_FILE=/var/run/testmode
+if [ -e $TEST_LOCK_FILE ]; then
+	/usr/bin/chmod 644 $TEST_LOCK_FILE
+fi
+
+eth_up
+
+rc_start
+
+kill -1 1
+
+if [ $# -gt 0 ]; then
+	if [ ".$1" = ".save" ]; then
+		cp $CFG_SYSTEM_SORTED $CFG_RUNNING
+		bgnd -r cfgmtd -e $CFG_SYSTEM_SORTED \
+			-- /sbin/cfgmtd -w -f $CFG_SYSTEM_SORTED \
+			-p /etc/ 2>/dev/null &
+	fi
+fi

@@ -1,0 +1,12 @@
+# Executed on startup
+::sysinit:/etc/rc.d/rc.sysinit
+# Start an "askfirst" shell on the console (whatever that may be)
+ttyS0::askfirst:/sbin/getty -L ttyS0 115200 vt100
+# Stuff to do when restarting the init process
+::restart:/sbin/init
+# Run daemons
+::wait:/usr/etc/rc.d/rc start
+# Stuff to do before rebooting
+::shutdown:/etc/rc.d/rc stop
+::shutdown:/etc/rc.d/rc.stop
+::shutdown:/bin/umount -a -r

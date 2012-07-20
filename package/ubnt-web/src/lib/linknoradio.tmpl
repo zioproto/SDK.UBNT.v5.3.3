@@ -1,0 +1,18 @@
+<? include("lib/link_head.tmpl"); >
+
+ <tr>
+    <td colspan="2" class="centr">
+    <?if (cfg_is_modified($cfg_file)) { include("lib/modified.tmpl"); }
+      if ($netwarning == "1") { include("lib/warn-net.tmpl"); }
+      include("lib/error.tmpl");>
+    <br>
+    </td>
+  </tr>
+  <tr>
+    <td height="10" colspan="2" class="foot"><? echo dict_translate($oem_copyright); >
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title><? echo get_title($cfg, dict_translate("Throughput")); ></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta http-equiv="Pragma" content="no-cache">
+<link rel="shortcut icon" href="FULL_VERSION_LINK/favicon.ico" >
+<link href="FULL_VERSION_LINK/style.css" rel="stylesheet" type="text/css">
+</head>
+<body class="popup">
+<script type="text/javascript" language="javascript" src="FULL_VERSION_LINK/signal.js"></script>
+<script type="text/javascript" language="javascript" src="FULL_VERSION_LINK/util.js"></script>
+<!--[if IE]><script type="text/javascript" src="FULL_VERSION_LINK/js/excanvas.pack.js"></script><![endif]-->
+<script type="text/javascript" src="FULL_VERSION_LINK/js/jquery.js"></script>
+<script type="text/javascript" src="FULL_VERSION_LINK/js/jquery.flot.pack.js"></script>
+<script type="text/javascript" language="javascript" src="FULL_VERSION_LINK/throughput.js"></script>
+<script type="text/javascript" language="javascript">
+
+function refreshAll()
+{
+	if (typeof reloadStatus == 'function')
+		reloadStatus();
+	reloadData();
+}
+
+jQuery(document).ready(refreshAll);
+
+</script>
+<form action="througput.cgi" method="GET">
+<table id="throughput">
+        <tr><td><? echo dict_translate("LAN"); ></td>
+            <td><span id="wlangraphlabel"><? echo dict_translate("WLAN"); ></span></td>
+        </tr>
+	<tr>
+	  <td>
+	  	<div style="border: 1px solid #ffffff;">
+		<div id="lanCanvas" style="position:relative;height:150px;width:350px;"></div>
+		</div>
+	  </td>
+	  <td>
+	  	<div style="border: 1px solid #ffffff;">
+		<div id="wlanCanvas" style="position:relative;height:150px;width:350px;"></div>
+		</div>
+	  </td>
+	</tr>
+        <? if (cfg_get_def($cfg, "ppp.status", "disabled") == "enabled" &&
+        	cfg_get_def($cfg, "ppp.1.status", "enabled") == "enabled") {>
+        <tr><td><? echo dict_translate("PPPoE"); ></td>
+            <td>&nbsp;</td>
+        </tr>
+	<tr>
+	  <td>
+	  	<div style="border: 1px solid #ffffff;">
+		<div id="pppCanvas" style="position:relative;height:150px;width:350px;"></div>
+		</div>
+	  </td>
+          <td>&nbsp</td>
+	</tr>
+        <? } >
+	<tr>
+          <td id="refresh" class="change" colspan="2"><input type="button" onClick="return refreshAll();" value=" <? echo dict_translate("Refresh"); > "></td>
+	</tr>
+</table>
+</form>
+</body>
+</html>

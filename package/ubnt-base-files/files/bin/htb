@@ -1,0 +1,315 @@
+#!/bin/sh
+#
+# HTB control script with start and stop actions
+# start action REQUIRES the following parameters:
+#	-l lan devices
+#	-w wan devices
+#	-i lan rate
+#	-o wan rate
+# Optional parameters for start action:
+#	-j lan burst
+#	-m wan burst
+#	-a lan ceil
+#	-b wan ceil
+#	-x lan cburst
+#	-y wan cburst
+#
+# stop action does not take any parameters
+#
+
+DEVICESFILE=/tmp/htb_devices.txt
+CLASS=1
+
+# these TOS values will place packet to high priority queue
+# 0x10 means low latency
+# 0x18, 0xb8 - low latency variations, used by voip
+HIGH_TOS="0x10 0x18 0xb8"
+# 4569 - default voip server port
+HIGH_PORTS="4569"
+
+# ports (source or dest) that go to low priority queue
+LOW_PORTS="25 22 110 143 943"
+
+# CEIL rates
+LANCEIL="100Mbit"
+WANCEIL="100Mbit"
+
+LG="echo"
+
+usage() {
+	echo "Usage: $0 start|stop [<args>]"
+}
+
+usage_start() {
+	echo -e "Usage: $0 start -l <lan device list> -w <wan device list>\n\t\t-i <lan rate> -o <wan rate>\n\t\t-a <lan ceil rate> -b <wan ceil rate>\n\t\t-j <lan burst> -m <wan burst> -x <lan cburst> -y <wan cburst>\n
+Example: $0 start -l 'eth3 ath0' -w 'eth1 eth2' -i 2000Kbit -o 1000Kbit -a 54Mbit -b 100Mbit -j 100Kb -m 100Kb -x 50Kb -y 50Kb\n
+Note: default lan/wan ceil rate is 100Mbit\n"
+}
+
+do_stop() {
+	if [ -s $DEVICESFILE ]; then
+		DEVICES=`cat $DEVICESFILE`
+		echo "devices: $DEVICES"
+	else
+		echo Error: $DEVICESFILE is empty or not existing
+		return 1
+	fi
+
+	# remove stale crap
+	for dev in $DEVICES; do
+		tc qdisc del dev $dev root > /dev/null 2>&1
+		tc qdisc del dev $dev ingress > /dev/null 2>&1
+	done
+
+	# remove file
+	rm -f $DEVICESFILE
+}
+
+setup_ingress_for_device() {
+	CLASS=$1
+	dev=$2
+	RATE=$3
+	BURST=$4
+        BURST_VAL=${BURST:6}
+        RBURST=$((${BURST_VAL%KB}*8)) #in kbit
+        [ ${RBURST} -le ${RATE} ] && RBURST=${RATE}
+	CEIL_VAL=$((90*1024)) #assuming max 90Mbps for now
+        [ ${CEIL_VAL} -le ${RBURST} ] && RBURST=${CEIL_VAL}
+        RBURST="burst ${RBURST}kbit"
+
+	TC="tc qdisc add dev $dev handle ffff: ingress"
+	$TC || $LG "'${TC}' has failed."
+
+	for tos in ${HIGH_TOS}; do
+		# TOS Minimum Delay (ssh, NOT scp)
+		TC="tc filter add dev $dev parent ffff: protocol ip prio 10 \
+			u32 match ip tos ${tos} 0xff \
+                        police rate ${RATE}kbit ${RBURST} drop flowid ${CLASS}:"
+		$TC || $LG "'${TC}' has failed."
+	done
+
+	for port in ${HIGH_PORTS}; do
+		TC="tc filter add dev $dev parent ffff: protocol ip prio 11 \
+			u32 match ip dport ${port} 0xffff \
+                        police rate ${RATE}kbit ${RBURST} drop flowid ${CLASS}:"
+		$TC || $LG "'${TC}' has failed."
+		TC="tc filter add dev $dev parent ffff: protocol ip prio 11 \
+			u32 match ip sport ${port} 0xffff \
+                        police rate ${RATE}kbit ${RBURST} drop flowid ${CLASS}:"
+		$TC || $LG "'${TC}' has failed."
+	done
+
+	# ICMP (ip protocol 1)
+	TC="tc filter add dev $dev parent ffff: protocol ip prio 12 \
+		u32 match ip protocol 1 0xff \
+                police rate ${RATE}kbit ${RBURST} drop flowid ${CLASS}:"
+	$TC || $LG "'${TC}' has failed."
+
+	# put ACK packets in the interactive class:
+	TC="tc filter add dev $dev parent ffff: protocol ip prio 15 u32 \
+		match ip protocol 6 0xff \
+		match u8 0x05 0x0f at 0 \
+		match u16 0x0000 0xffc0 at 2 \
+		match u8 0x10 0xff at 33 \
+                police rate ${RATE}kbit ${RBURST} drop \
+		flowid ${CLASS}:"
+	$TC || $LG "'${TC}' has failed."
+
+	# low priority stuff
+	for port in ${LOW_PORTS}; do
+		TC="tc filter add dev $dev parent ffff: protocol ip prio 40 u32 \
+			match ip sport ${port} 0xffff \
+                        police rate $((8*${RATE}/10))kbit ${RBURST} drop flowid ${CLASS}:"
+		$TC || $LG "'${TC}' has failed."
+		TC="tc filter add dev $dev parent ffff: protocol ip prio 40 u32 \
+			match ip dport ${port} 0xffff \
+                        police rate $((8*${RATE}/10))kbit ${RBURST} drop flowid ${CLASS}:"
+		$TC || $LG "'${TC}' has failed."
+	done
+        
+        # Use strict policy for ip by now 
+        TC="tc filter add dev $dev parent ffff: protocol ip prio 30 \
+        	u32 match ip src 0.0.0.0/0 \
+		police rate $((9*${RATE}/10))kbit ${RBURST} drop flowid ${CLASS}:"
+	$TC || $LG "'${TC}' has failed."
+}
+
+setup_htb_for_device() {
+	CLASS=$1
+	dev=$2
+	RATE=$3
+	BURST=$4
+	CEIL=$5
+
+	TC="tc qdisc add dev $dev root handle $CLASS:0 htb default 30"
+	$TC || $LG "'${TC}' has failed."
+
+	TC="tc class add dev $dev parent $CLASS:0 classid $CLASS:1 \
+		htb rate ${RATE}kbit ${CEIL} ${BURST}"
+	$TC || $LG "'${TC}' has failed."
+
+	# now add high/norm/low classes
+	TC="tc class add dev $dev parent $CLASS:1 classid $CLASS:10 \
+		htb rate ${RATE}kbit ${CEIL} ${BURST} prio 1"
+	$TC || $LG "'${TC}' has failed."
+
+	TC="tc class add dev $dev parent $CLASS:1 classid $CLASS:20 \
+		htb rate ${RATE}kbit ${CEIL} ${BURST} prio 2"
+	$TC || $LG "'${TC}' has failed."
+
+	TC="tc class add dev $dev parent $CLASS:1 classid $CLASS:30 \
+		htb rate $((9*RATE/10))kbit ${CEIL} ${BURST} prio 3"
+	$TC || $LG "'${TC}' has failed."
+
+	TC="tc class add dev $dev parent $CLASS:1 classid $CLASS:40 \
+		htb rate $((8*RATE/10))kbit ${CEIL} ${BURST} prio 4"
+	$TC || $LG "'${TC}' has failed."
+
+	# all get Stochastic Fairness:
+	for id in 10 20 30 40; do
+		TC="tc qdisc add dev $dev parent $CLASS:${id} handle ${id}: sfq perturb 10"
+		$TC || $LG "'${TC}' has failed."
+	done
+
+	#EAPOL highest priority
+	TC="tc filter add dev $dev parent $CLASS:0 protocol all prio 5 \
+		u32 match u16 0x888e 0xffff at -2 flowid $CLASS:10"
+	$TC || $LG "'${TC}' has failed."
+
+	for tos in ${HIGH_TOS}; do
+		# TOS Minimum Delay (ssh, NOT scp) in :10
+		TC="tc filter add dev $dev parent $CLASS:0 protocol ip prio 10 \
+			u32 match ip tos ${tos} 0xff  flowid $CLASS:20"
+		$TC || $LG "'${TC}' has failed."
+	done
+
+	for port in ${HIGH_PORTS}; do
+		TC="tc filter add dev $dev parent $CLASS:0 protocol ip prio 11 \
+			u32 match ip dport ${port} 0xffff flowid $CLASS:20"
+		$TC || $LG "'${TC}' has failed."
+		TC="tc filter add dev $dev parent $CLASS:0 protocol ip prio 11 \
+			u32 match ip sport ${port} 0xffff flowid $CLASS:20"
+		$TC || $LG "'${TC}' has failed."
+	done
+
+	# ICMP (ip protocol 1) in the interactive class :10 so we
+	# can do measurements & impress our friends:
+	TC="tc filter add dev $dev parent $CLASS:0 protocol ip prio 12 \
+		u32 match ip protocol 1 0xff flowid $CLASS:20"
+	$TC || $LG "'${TC}' has failed."
+
+	# put ACK packets in the interactive class:
+	TC="tc filter add dev $dev parent $CLASS: protocol ip prio 15 u32 \
+		match ip protocol 6 0xff \
+		match u8 0x05 0x0f at 0 \
+		match u16 0x0000 0xffc0 at 2 \
+		match u8 0x10 0xff at 33 \
+		flowid $CLASS:20"
+	$TC || $LG "'${TC}' has failed."
+
+	# low priority stuff
+	for port in ${LOW_PORTS}; do
+		TC="tc filter add dev $dev parent $CLASS: protocol ip prio 30 u32 \
+			match ip sport ${port} 0xffff flowid $CLASS:40"
+		$TC || $LG "'${TC}' has failed."
+		TC="tc filter add dev $dev parent $CLASS: protocol ip prio 30 u32 \
+			match ip dport ${port} 0xffff flowid $CLASS:40"
+		$TC || $LG "'${TC}' has failed."
+	done
+	#rest will endup in 1:30 class (see root qdisc setting)
+
+} # end of setup_htb_for_device()
+
+do_start() {
+	while getopts "l:w:i:o:j:m:x:y:a:b:" options; do
+	    case $options in
+		l ) LANDEVICES=$OPTARG;;
+		w ) WANDEVICES=$OPTARG;;
+		i ) LANRATE=$OPTARG;;
+		o ) WANRATE=$OPTARG;;
+		j ) LANBURST=$OPTARG;;
+		m ) WANBURST=$OPTARG;;
+		a ) LANCEIL=$OPTARG;;
+		b ) WANCEIL=$OPTARG;;
+		x ) LANCBURST=$OPTARG;;
+		y ) WANCBURST=$OPTARG;;
+		* ) usage_start
+			return 1;;
+	    esac
+	done
+
+	if [ -z "$LANDEVICES" ] || [ -z "$LANRATE" ] || [ -z "$WANDEVICES" ] || [ -z "$WANRATE" ]
+	then
+		usage_start
+		return 1
+	fi
+
+	# remove stale crap
+	for dev in $LANDEVICES $WANDEVICES; do
+		tc qdisc del dev $dev root > /dev/null 2>&1
+	done
+
+	## calculate bursts
+	if [ -z $LANBURST ]; then
+		LBURST="burst 6KB"
+	else
+		if [ -z $LANCBURST ]; then
+			LBURST="burst $LANBURST"
+		else
+			LBURST="burst $LANBURST"
+                        LCBURST="cburst $LANCBURST"
+		fi
+	fi
+	if [ -z $WANBURST ]; then
+		WBURST="burst 6KB"
+	else
+		if [ -z $WANCBURST ]; then
+			WBURST="burst $WANBURST"
+		else
+			WBURST="burst $WANBURST"
+                        WCBURST="cburst $WANCBURST"
+		fi
+	fi
+	if [ "${WANCEIL}" != "" ]; then
+		WCEIL="ceil ${WANCEIL}"
+	fi
+	if [ "${LANCEIL}" != "" ]; then
+		LCEIL="ceil ${LANCEIL}"
+	fi
+
+	# init root handles
+	for dev in $LANDEVICES; do
+		setup_htb_for_device $CLASS $dev $LANRATE "$LBURST $LCBURST" "$LCEIL"
+		setup_ingress_for_device $CLASS $dev $WANRATE "$WBURST"
+	done
+
+	for dev in $WANDEVICES; do
+		setup_htb_for_device $CLASS $dev $WANRATE "$WBURST $WCBURST" "$WCEIL"
+		setup_ingress_for_device $CLASS $dev $LANRATE "$LBURST"
+	done
+
+	# save devices for other scripts
+	echo $LANDEVICES $WANDEVICES > $DEVICESFILE
+}
+
+main() {
+	CMD="$1"
+	shift
+	case "$CMD" in
+	stop)
+		do_stop "$@"
+		return $?
+		;;
+	start)
+		do_start "$@"
+		return $?
+		;;
+	*)
+		usage
+		return 255
+		;;
+	esac
+}
+
+main "$@"
+exit $?

@@ -1,0 +1,13 @@
+--- a/iwlist.c
++++ b/iwlist.c
+@@ -797,8 +797,8 @@ print_scanning_info(int		skfd,
+ 	  wrq.u.data.length = buflen;
+ 	  if(iw_get_ext(skfd, ifname, SIOCGIWSCAN, &wrq) < 0)
+ 	    {
+-	      /* Check if buffer was too small (WE-17 only) */
+-	      if((errno == E2BIG) && (range.we_version_compiled > 16))
++	      /* Check if buffer was too small */
++	      if(errno == E2BIG)
+ 		{
+ 		  /* Some driver may return very large scan results, either
+ 		   * because there are many cells, or because they have many

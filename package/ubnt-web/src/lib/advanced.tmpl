@@ -1,0 +1,399 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN">
+<html>
+<head>
+<title><? echo get_title($cfg, dict_translate("Advanced")); ></title>
+<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
+<meta http-equiv="Pragma" content="no-cache">
+<link rel="shortcut icon" href="FULL_VERSION_LINK/favicon.ico" >
+<link href="FULL_VERSION_LINK/style.css" rel="stylesheet" type="text/css">
+<script type="text/javascript" language="javascript" src="jsl10n.cgi"></script>
+<script type="text/javascript" src="FULL_VERSION_LINK/slider-min.js"></script>
+<script type="text/javascript" src="FULL_VERSION_LINK/jsval.js"></script>
+<script type="text/javascript" src="FULL_VERSION_LINK/util.js"></script>
+<script type="text/javascript" language="javascript1.2" src="FULL_VERSION_LINK/slink.js"></script>
+<script type="text/javascript" src="FULL_VERSION_LINK/js/jquery.js"></script>
+<script type="text/javascript" src="FULL_VERSION_LINK/js/jquery.utils.js"></script>
+<link type="text/css" rel="StyleSheet" href="FULL_VERSION_LINK/bluecurve.css" />
+<script type="text/javascript" language="javascript">
+	//<!--
+	function init() {
+		createSlider(<?echo $minacktimeout>, <?echo $maxacktimeout>);
+		$('#rate_module').val("<? echo $rate_module; >");
+		$('#noise_immunity').val("<? echo $noise_immunity; >");
+		shaperStatusClicked();
+		aggregationStatusClicked();
+		ethAutonegClicked();
+		$('#eth_speed').val("<? echo $eth_speed; >");
+
+		var fixer = new ieee_mode_fixer("<?echo $ieee_mode>".toLowerCase(),
+			"<?echo $clksel>");
+		init_rates(null, fixer.getIEEEMode(), fixer.getClkSel(),
+			"<?echo $mcast_rate>", "mcast_rate");
+                var o=document.getElementById('rtsoff');
+                handleOff(o, 'rts', 2346);
+                o=document.getElementById('fragoff');
+                handleOff(o, 'frag', 2346);
+                o=document.getElementById('rssi_sensoff');
+                handleOff(o, 'rssi_sens', -96);
+         	if (<? echo $ccode;> == 511) {
+			$('#eirp_status').attr('disabled', true);
+			$('#eirp_status').attr('checked', true);
+                }
+	}
+
+	function handleOff(o, id, val) {
+		var d=document.getElementById(id);
+                if (d && o) {
+					d.disabled=o.checked;
+                        if (o.checked) {
+							d.value = val;
+                        }
+                }
+        }
+	function handleOffFrag(o, id, val) {
+		var d=document.getElementById('aggr_status');
+		if (!o.checked) {
+			d.checked = false;
+		} else {
+			d.checked = true;
+		}
+		statusClicked(d,new Array('aggr_frames', 'aggr_bytes'));
+		handleOff(o, id, val);
+        }
+	function aggregationStatusClicked(){
+		var o=document.getElementById('aggr_status');
+		var d=document.getElementById('fragoff');
+		var g=document.getElementById('frag');
+		if (o.checked) {
+			d.checked = true;
+			g.disabled = true;
+		}
+		statusClicked(o,new Array('aggr_frames', 'aggr_bytes'));
+	}
+	function ethAutonegClicked(){
+		var o=document.getElementById('eth_autoneg');
+		var d=document.getElementById('eth_speed');
+		var g=document.getElementById('eth_duplex');
+		var v_disabled=false;
+
+		if (o.checked) v_disabled=true;
+		d.disabled=v_disabled;
+		g.disabled=v_disabled;
+	}
+
+	$.fn.enable = function(enable) {
+		return enable ?
+			this.removeClass('disabled').attr('disabled', false) :
+			this.attr('disabled', true).addClass('disabled');
+	}
+
+	function doSubmit() {
+		$('#adv_form').submit();
+	}
+
+jQuery(document).ready(init);
+	//-->
+</script>
+</head>
+<? flush(); >
+<body>
+<table class="maintable" cellpadding="0" align="center" cellspacing="0"><?
+$top_tab = "4dv"; include("lib/head.tmpl");
+>  <tr>
+    <td colspan="2" class="centr">
+    <?if (cfg_is_modified($cfg_file)) { include("lib/modified.tmpl"); } include("lib/error.tmpl");>
+    <br>
+    <form id="adv_form" enctype="multipart/form-data" action="advanced.cgi" method="POST"
+    	  onSubmit="return validateStandard(this, 'error');">
+    <table border="0" cellpadding="0" cellspacing="0" class="linktable">
+
+ <!-- Advanced wireless -->
+      <tr><th colspan="3"><? echo dict_translate("Advanced Wireless Settings"); ></th></tr>
+	  <tr><td colspan="3" class="tdpad">&nbsp;</td></tr>
+<? if ($feature_ratemodule == 1) { >
+      <tr>
+        <td class="f"><? echo dict_translate("Rate Algorithm:"); ></td>
+        <td colspan="2">
+          <select id="rate_module" name="rate_module" req="1" realname="<? echo dict_translate("Rate Algorithm:"); >">
+            <option value="ath_rate_sample" selected><? echo dict_translate("Optimistic"); ></option>
+            <option value="ath_rate_onoe"><? echo dict_translate("Conservative"); ></option>
+            <option value="ath_rate_minstrel"><? echo dict_translate("EWMA");></option>
+          </select>
+         </td>
+      </tr>
+<? } >
+<? if ($feature_noiseim == 1) { >
+      <tr>
+        <td class="f"><? echo dict_translate("Noise Immunity:"); ></td>
+        <td colspan="2">
+          <select id="noise_immunity" name="noise_immunity" req="1" realname="<? echo dict_translate("Noise Immunity:"); >">
+            <option value="28" selected><? echo dict_translate("Normal 802.11 Operation"); ></option>
+            <option value="18"><? echo dict_translate("opt_chann_hopping|For Channel Hopping Signals"); ></option>
+            <option value="40"><? echo dict_translate("opt_801_traffic|For 802.11 Traffic"); ></option>
+          </select>
+         </td>
+      </tr>
+<? } >
+      <tr>
+        <td class="f d"><? echo dict_translate("RTS Threshold:"); ></td>
+        <td class="f-left" colspan="2"><input type="text" class="std_width" id="rts" name="rts" maxlength="4" size="5" value="<?echo $rts>" req="1" maxvalue="2346" minvalue="0" realname="<? echo dict_translate("RTS Threshold"); > ([0 - 2346])"/>
+        	<input type="checkbox" id="rtsoff" name="rtsoff" value="off"
+			<?if ($rts == "off") { echo "checked"; }> onClick="handleOff(this, 'rts', 2346);"><? echo dict_translate("Off"); >
+        </td>
+      </tr>
+      <tr>
+        <td class="f"><? echo dict_translate("Fragmentation Threshold:"); ></td>
+        <td class="f-left" colspan="2"><input type="text" class="std_width" id="frag" name="frag" maxlength="4" size="5" value="<?echo $frag>" req="1" maxvalue="2346" minvalue="256"  realname="<? echo dict_translate("Fragmentation Threshold"); > ([256 - 2346])"/>
+		<input type="hidden" id="fragoff_old" name="fragoff_old" value="off"
+			<? if ($frag == "off") { echo "checked"; } > >
+        	<input type="checkbox" id="fragoff" name="fragoff" value="off"
+			<?if ($frag == "off") { echo "checked"; }> onClick="handleOffFrag(this, 'frag', 2346);"><? echo dict_translate("Off"); >
+        </td>
+      </tr>
+      <tr>
+        <td class="f"><? echo dict_translate("Distance:"); ></td>
+        <td colspan="2" style="padding: 0px 0px 0px 0px;">
+        <table style="padding: 0px 0px 0px 0px;" cellspacing="0"><tr>
+        <td>
+          <div class="slider" id="slider-1" tabIndex="1">
+          	<input class="slider-input" id="slider-input-1" name="slider-input-1"/>
+		  </div>
+		</td>
+        <td class="f-left" style="width: 200px;"><input type="hidden" id="ackdistance" name="ackdistance" value="<? echo $ackdistance;>"><input type="text" class="std_width" id="distance" size="5" maxlength="5"/> <? echo dict_translate("miles"); > (<span id="distkm"></span> km)</td>
+		</tr></table>
+		</td>
+      </tr>
+      <tr>
+        <td class="f"><? echo dict_translate("ACK Timeout:"); ></td>
+	<td class="f-left" colspan="2"><input type="text" class="std_width" id="acktimeout" name="acktimeout" size="5" value="<?echo $acktimeout>" req="1" minvalue="<?echo $minacktimeout>" maxvalue="<?echo $maxacktimeout>" realname="<? echo dict_translate("ACK timeout"); >"/> &nbsp;
+	<input type="checkbox" id="autoack" name="autoack" value="enabled"
+	<?if ($autoack == "enabled") { echo "checked"; }>
+	><? echo dict_translate("Auto Adjust"); ></td>
+      </tr>
+<? if ($radio1_legacy == 1) { >
+      <tr>
+<? if ($ieee_mode == "ast" || $ieee_mode == "at" || $ieee_mode == "a" ||
+       $ieee_mode == "7" || $ieee_mode == "5" || $ieee_mode == "1") { >
+        <td class="f"><? echo dict_translate("SuperAG Features:"); ></td>
+<? } else {>
+        <td class="f"><? echo dict_translate("SuperG Features:"); ></td>
+<? } >
+	<td colspan="2" style="padding: 0px 0px 0px 0px;"><table cellpadding="0" cellspacing="0"><tr>
+	<td class="f-left"><input type="checkbox" id="fast_frame" name="fast_frame" value="enabled"
+		<?if ($fast_frame == "enabled") { echo "checked"; }>
+		><? echo dict_translate("Fast Frame"); ></td>
+	<td class="f-left"><input type="checkbox" id="burst" name="burst" value="enabled"
+		<?if ($burst == "enabled") { echo "checked"; }>
+		><? echo dict_translate("Bursting"); ></td>
+<? if ($feature_super_comp == 1) { >
+	<td class="f-left"><input type="checkbox" id="compression" name="compression" value="enabled"
+		<?if ($compression == "enabled") { echo "checked"; }>
+		><? echo dict_translate("Compression"); ></td>
+<? } >
+	</tr></table></td>
+      </tr>
+<? } >
+<? if ($radio1_legacy != 1) { >
+      <!-- aggregation  -->
+      <tr>
+        <td class="f"><? echo dict_translate("Aggregation:"); ></td>
+	<td class="f-left" colspan="2"><input type="checkbox" name="aggr_status" id="aggr_status" value="enabled"
+        	onClick="aggregationStatusClicked();" <?if ($aggr_status == "enabled") { echo "checked"; }>>
+        	<? echo dict_translate("Enable"); ></td>
+      </tr>
+      <tr>
+        <td></td>
+	<td class="f-left" colspan="2">
+		<input type="text" class="std_width" id="aggr_frames" name="aggr_frames" align="right" req="1" value="<? echo $aggr_frames;>"
+        		size="5" maxlength="2" realname="<? echo dict_translate("Aggregation Frames (1-32)"); >" minValue="1" maxValue="32">
+        		<? echo dict_translate("Frames"); >&nbsp;
+                <input type="text" class="std_width" id="aggr_bytes" name="aggr_bytes" align="right" req="1" value="<? echo $aggr_bytes;>"
+        		size="6" maxlength="5" realname="<? echo dict_translate("Aggregation Bytes (2304-65535)"); >" minValue="2304" maxValue="65535">
+	        	<? echo dict_translate("Bytes"); >
+        </td>
+      </tr>
+<? } >
+      <!-- data rate -->
+      <tr>
+        <td class="f"><? echo dict_translate("Multicast Data:"); ></td>
+	<td class="f-left" colspan="2"><input type="checkbox" name="mcast_status" value="<? echo $mcast_status; >" id="mcast_status"
+		<?if ($mcast_status == "enabled") { echo "checked"; }>><? echo dict_translate("Allow All"); ></td>
+      </tr>
+<? if ($feature_mcastrate == 1) { >
+      <tr>
+        <td class="f"><? echo dict_translate("Multicast Rate"); >, Mbps:</td>
+	<td colspan="2"><select id="mcast_rate" name="mcast_rate" align="right" req="1" realname="<? echo dict_translate("Multicast Rate"); >">
+	</select></td>
+      </tr>
+<? } >
+      <tr>
+        <td class="f"><? echo dict_translate("Enable Installer EIRP Control:"); ></td>
+	    <td class="f-left" colspan="2"><input type="checkbox" name="eirp_status" value="enabled" id="eirp_status"
+	    <?if ($eirp_status == "enabled") { echo "checked"; }>>
+	    </td>
+      </tr>
+      <tr>
+        <td class="f"><? echo dict_translate("Enable Extra Reporting:"); ></td>
+	    <td colspan="2"><input type="checkbox" name="mtikie" value="enabled" id="mtikie"
+	    <?if ($mtikie == "enabled") { echo "checked"; }>>
+	    </td>
+      </tr>
+<? if ($wmode_type == 2) { >
+      <tr>
+        <td class="f"><? echo dict_translate("Enable Client Isolation:"); ></td>
+	    <td colspan="2"><input type="checkbox" name="client_isolation_status" id="client_isolation_status"
+		value="<? echo $client_isolation_status; >"
+	    <?if ($client_isolation_status == "enabled") { echo "checked"; }>>
+	    </td>
+      </tr>
+<? } >
+<? if ($wmode_type != 2) { >
+		<input type="hidden" name="client_isolation_status" id="client_isolation_status"
+		value="<? if ($client_isolation_status == "enabled") { echo $client_isolation_status; } >" >
+<? } >
+		<input name="ieee_mode" id="ieee_mode" type="hidden" value="<?echo $ieee_mode?>">
+                <input name="clksel" id="clksel" type="hidden" value="<?echo $clksel?>">&nbsp;
+      </td></tr>
+      <tr>
+        <td class="f d"><? echo dict_translate("Sensitivity Threshold, dBm:"); ></td>
+        <td class="f-left" colspan="2"><input type="text" class="std_width" id="rssi_sens" name="rssi_sens" maxlength="3" size="5" value="<?echo $rssi_sens>" req="1" maxvalue="-1" minvalue="-96" realname="<? echo dict_translate("Sersitivity Threshold"); > [-96 ... -1]"/>
+        	<input type="checkbox" id="rssi_sensoff" name="rssi_sensoff" value="off"
+			<?if ($rssi_sens == "off" || $rssi_sens == -96) { echo "checked"; }> onClick="handleOff(this, 'rssi_sens', -96);"><? echo dict_translate("Off"); >
+        </td>
+      </tr>
+      <tr><td colspan="3" class="tdpad">&nbsp;</td></tr>
+      <tr><td colspan="3" class="tdpad">
+<? if ($feature_advanced_ethernet == 1) { >
+ <!-- Advanced ethernet -->
+      <tr><th colspan="3"><? echo dict_translate("Advanced Ethernet Settings"); ></th></tr>
+	  <tr><td colspan="3" class="tdpad">&nbsp;</td></tr>
+ <? if ($feature_poe_passthrough) { >
+      <tr>
+        <td class="f"><? echo dict_translate("Enable POE Passthrough:"); ></td>
+            <td colspan="2"><input type="checkbox" name="poe_pass" value="enabled" id="poe_pass"
+            <?if ($poe_pass == "enabled") { echo "checked"; }>>
+            </td>
+      </tr>
+<? } >
+<? if ($feature_advanced_ethernet_phy == 1) { >
+      <tr>
+        <td class="f"><? echo dict_translate("Enable Autonegotiation:"); ></td>
+	    <td colspan="2"><input type="checkbox" name="eth_autoneg" id="eth_autoneg"
+		onClick="ethAutonegClicked();" value="enabled"
+	    <?if ($eth_autoneg == "enabled") { echo "checked"; }>>
+	    </td>
+      </tr>
+      <tr>
+        <td class="f"><? echo dict_translate("Link Speed, Mbps:"); ></td>
+        <td colspan="2">
+	  <input type="hidden" id="eth_speed_old" name="eth_speed_old" value="<? echo $eth_speed>">
+          <select id="eth_speed" name="eth_speed" req="1" realname="<? echo dict_translate("Speed, Mbps:"); >">
+            <option value="100"><? echo dict_translate("100"); ></option>
+            <option value="10"><? echo dict_translate("10"); ></option>
+          </select>
+         </td>
+      </tr>
+      <tr>
+        <td class="f"><? echo dict_translate("Enable Full Duplex:"); ></td>
+            <td colspan="2">
+	    <input type="hidden" id="eth_duplex_old" name="eth_duplex_old" value="<? echo $eth_duplex>">
+	    <input type="checkbox" name="eth_duplex" value="enabled" id="eth_duplex"
+            <?if ($eth_duplex != "disabled") { echo "checked"; }>>
+            </td>
+      </tr>
+<? } >
+<? } >
+
+<? if ($feature_rssi_leds > 1) { >
+      <tr><td colspan="3" class="tdpad">&nbsp;</td></tr>
+      <tr><th colspan="3"><? echo dict_translate("Signal LED Thresholds"); ></th></tr>
+	<tr><td colspan="3" class="tdpad">&nbsp;</td></tr>
+	<tr>
+        <td class="f">
+                <table style="width: 100%; padding: 0px;" cellpadding="0" cellspacing="0">
+                <tr><td>&nbsp;</td></tr>
+                <tr><td class="f">
+                        <? echo dict_translate("Thresholds, dBm:"); >
+                </td></tr>
+                </table>
+        </td>
+	<td colspan="2">
+                <table style="padding: 0px;" cellpadding="0" cellspacing="0"><tr>
+                	<td class="f" style="text-align: center;">&nbsp;&nbsp;<? echo dict_translate("LED1");></td>
+                	<td class="f" style="text-align: center;">&nbsp;&nbsp;<? echo dict_translate("LED2");></td>
+					<? if ($feature_rssi_leds > 2) { >
+                	<td class="f" style="text-align: center;">&nbsp;&nbsp;<? echo dict_translate("LED3");></td>
+					<? } >
+					<? if ($feature_rssi_leds > 3) { >
+                	<td class="f" style="text-align: center;">&nbsp;&nbsp;<? echo dict_translate("LED4");></td>
+					<? } >
+        	</tr>
+                <tr>
+			<td>-&nbsp;<input type="text" class="std_width" id="led1" name="led1" value="<?echo $led1>" size="2" maxlength="2" req="1" minvalue="0" maxvalue="95" realname="<? echo dict_translate("Signal LED1"); > [0-95]"/></td>
+			<td>-&nbsp;<input type="text" class="std_width" id="led2" name="led2" value="<?echo $led2>" size="2" maxlength="2" req="1" minvalue="0" maxvalue="95" realname="<? echo dict_translate("Signal LED2"); > [0-95]"/></td>
+			<? if ($feature_rssi_leds > 2) { >
+			<td>-&nbsp;<input type="text" class="std_width" id="led3" name="led3" value="<?echo $led3>" size="2" maxlength="2" req="1" minvalue="0" maxvalue="95" realname="<? echo dict_translate("Signal LED3"); > [0-95]"/></td>
+			<? } >
+			<? if ($feature_rssi_leds > 3) { >
+			<td>-&nbsp;<input type="text" class="std_width" id="led4" name="led4" value="<?echo $led4>" size="2" maxlength="2" req="1" minvalue="0" maxvalue="95" realname="<? echo dict_translate("Signal LED4"); > [0-95]"/></td>
+			<? } >
+                </tr>
+		</table>
+        </td>
+      </tr>
+<? } >
+      <!-- Traffic shaping -->
+      <tr><td colspan="3" class="tdpad">&nbsp;</td></tr>
+      <tr><th colspan="3"><? echo dict_translate("Traffic Shaping"); ></th></tr>
+	  <tr><td colspan="3" class="tdpad">&nbsp;</td></tr>
+      <tr>
+      <td class="f"><? echo dict_translate("Enable Traffic Shaping:"); ></td>
+      <td colspan="2"><input type="checkbox" name="shaper_status" id="shaper_status" onClick="shaperStatusClicked();" <? if ($shaper_status =="enabled") { echo "checked"; }>></td>
+      </tr>
+      <tr class="shaper">
+        <td class="f"><? echo dict_translate("Incoming Traffic Limit:"); ></td>
+	<td class="f-left" colspan="2"><input type="text" class="std_width i_shaper" id="in_rate" name="in_rate" maxlength="8" size="7" value="<?echo $in_rate>" req="1" minvalue="1" realname="<? echo dict_translate("Incoming Traffic Limit"); >"/> <? echo dict_translate("kbit/s"); ></td>
+      </tr>
+      <tr class="shaper">
+        <td class="f"><? echo dict_translate("Incoming Traffic Burst:"); ></td>
+	<td class="f-left" colspan="2"><input type="text" class="std_width i_shaper" id="in_burst" name="in_burst" maxlength="8" size="7" value="<?echo $in_burst>" req="1" minvalue="0" realname="<? echo dict_translate("Incoming Traffic Burst"); >"/> <? echo dict_translate("kBytes"); ></td>
+      </tr>
+      <tr class="shaper">
+        <td class="f"><? echo dict_translate("Outgoing Traffic Limit:"); ></td>
+	<td class="f-left" colspan="2"><input type="text" class="std_width i_shaper" id="out_rate" name="out_rate" maxlength="8" size="7" value="<?echo $out_rate>" req="1" minvalue="1" realname="<? echo dict_translate("Outgoing Traffic Limit"); >"/> <? echo dict_translate("kbit/s"); ></td>
+      </tr>
+      <tr class="shaper">
+        <td class="f"><? echo dict_translate("Outgoing Traffic Burst:"); ></td>
+	<td class= "f-left" colspan="2"><input type="text" class="std_width i_shaper" id="out_burst" name="out_burst" maxlength="8" size="7" value="<?echo $out_burst>" req="1" minvalue="0" realname="<? echo dict_translate("Outgoing Traffic Burst"); >"/> <? echo dict_translate("kBytes"); ></td>
+      </tr>
+<? if ($feature_qos == 1) { >
+      <!-- WMM/QOS -->
+      <tr><td colspan="3" class="tdpad">&nbsp;</td></tr>
+      <tr><th colspan="3"><? echo dict_translate("802.11e QoS (WMM) Settings"); > </th></tr>
+	  <tr><td colspan="3" class="tdpad">&nbsp;</td></tr>
+      <tr>
+          <td class="f"><? echo dict_translate("QoS (WMM) Level:"); ></td>
+          <td colspan="2">
+	    <select name="wmm_level" id="wmm_level">
+	      <?echo $wmm_options>
+	    </select>
+	  </td>
+      </tr>
+<? } >
+	  <tr><td colspan="3" class="tdpad">&nbsp;</td></tr>
+      <tr><th colspan="3">&nbsp;</th></tr>
+      <tr>
+		<td colspan="3" class="change"><input type="submit" value="<? echo dict_translate("Change"); >" /></td>
+      </tr>
+      </table>
+    </form>
+    </td>
+  </tr>
+  <tr>
+    <td height="10" colspan="2" class="foot"><? echo dict_translate($oem_copyright); >
+    </td>
+  </tr>
+</table>
+
+</body>
+</html>
