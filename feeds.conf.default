@@ -2,5 +2,5 @@ src-svn packages file:///raid/repositories/openwrt/branches/packages_8.09 file:/
 src-git zninux git://github.com/ninuxorg/ninux-openwrt-packages.git;mDNS-plugin-GSOC
 #src-svn zninux https://svn.ninux.org/svn/ninuxdeveloping/packages
 #src-link zninux /home/saverio/SORGENTI/packagesninux-git/
-src-svn zopenwrtpackages svn://svn.openwrt.org/openwrt/packages/
+#src-svn zopenwrtpackages svn://svn.openwrt.org/openwrt/packages/
 #src-link zopenwrtpackages /home/saverio/SORGENTI/packages/
