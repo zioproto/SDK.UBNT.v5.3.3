@@ -8,6 +8,14 @@ First of all you need to check the path of your feeds in feeds.conf.default and 
 ./scripts/feeds install -p packages wget
 ./scripts/feeds install -p packages iputils
 
+This will change your .config, so make sure to checkout again the .config file with
+
+git checkout .config
+
+if you want exactly the configuration of the Sburratone firmware
+
+you are now ready for "make"
+
 How to compile this SDK
 -----------------------
 
