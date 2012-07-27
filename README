@@ -3,10 +3,7 @@ First of all you need to check the path of your feeds in feeds.conf.default and 
 
 ./scripts/feeds update zninux
 ./scripts/feeds install olsrd-ninux
-./scripts/feeds install -p packages radvd
-./scripts/feeds install -p packages mtr
-./scripts/feeds install -p packages wget
-./scripts/feeds install -p packages iputils
+./scripts/feeds install -p packages -a
 
 This will change your .config, so make sure to checkout again the .config file with
 
