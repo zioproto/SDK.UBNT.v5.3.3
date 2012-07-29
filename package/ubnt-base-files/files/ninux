@@ -9,4 +9,18 @@ insmod iptable_filter
 insmod ip_conntrack
 insmod ip_nat
 insmod iptable_nat
+
+echo 0 > /proc/sys/net/ipv6/conf/all/accept_ra
+ip -6 addr flush dev eth0 scope global
+ip -6 addr flush dev ath0 scope global
+#ip addr add 2001:4c00:893b:1:CAP::XX/128 dev ath0
+#ip addr add 2001:4c00:893b:CAP::XX/64 dev eth0
+olsrd -f /etc/persistent/olsrd6.conf -d 0
+
+if [ -e /etc/persistent/radvd.conf ]; then
+	radvd -C /etc/persistent/radvd.conf
+elif [ -e /etc/radvd.conf ]; then
+	radvd -C /etc/radvd.conf
+fi
+
 ) &
