@@ -1,8 +1,8 @@
 ( sleep 60
 if [ -e /etc/persistent/olsrd.conf ]; then
         olsrd -f /etc/persistent/olsrd.conf -d 0
-elif [ -e /olsrd.conf ]; then
-        olsrd -f /olsrd.conf -d 0
+elif [ -e /etc/olsrd.conf ]; then
+        olsrd -f /etc/olsrd.conf -d 0
 fi
 insmod ip_tables
 insmod iptable_filter
@@ -22,5 +22,12 @@ if [ -e /etc/persistent/radvd.conf ]; then
 elif [ -e /etc/radvd.conf ]; then
 	radvd -C /etc/radvd.conf
 fi
+
+if [ -e /etc/persistent/olsrd6.conf ]; then
+        olsrd -f /etc/persistent/olsrd6.conf -d 0
+elif [ -e /etc/olsrd6.conf ]; then
+        olsrd -f /etc/olsrd6.conf -d 0
+fi
+
 
 ) &
